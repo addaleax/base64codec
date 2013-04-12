@@ -20,6 +20,9 @@
     "test": "test"
   },
   "devDependencies": {
+    "eslinker": "~0.0.0",
+    "esmangle": "~0.0.12",
+    "escodegen": "~0.0.20",
     "mocha": "1.8.x",
     "grunt": "0.4.x",
     "grunt-mocha": "0.2.x",

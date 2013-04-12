@@ -1,265 +1,243 @@
 /*
- * Copyright (c) 2012 chick307 <chick307@gmail.com>
+ * base64codec version 0.0.3
+ *
+ * (C) 2012-2013 chick307 <chick307@gmail.com>
  *
  * Licensed under the MIT License.
  * http://opensource.org/licenses/mit-license
- *
- * References:
- * - http://tools.ietf.org/html/rfc3548
  */
 
-void function(global, callback) {
-	if (typeof module === 'object') {
-		// For Node.
-		module.exports = callback();
-	} else if (typeof define === 'function') {
-		// For RequireJS.
-		define(callback);
-	} else {
-		// For web browsers.
-		global.base64codec = callback();
-	}
-}(this, function() {
-	var Buffer = (function() {
-		if (typeof require === 'function') {
-			var buffer;
-			try {
-				// this will fail in browser-side require.js environments
-				buffer = require('buffer');
-			} catch(requireJs) {}
-			if (buffer && buffer.Buffer)
-				return buffer.Buffer;
-		}
-		return null;
-	}());
-
-	if (Buffer !== null) {
-		// For Node.
-		return {
-			encode: function encode(binaryString) {
-				var buffer = new Buffer(binaryString + '', 'binary');
-				return buffer.toString('base64');
-			},
-			encodeUtf8: function encodeUtf8(utf8String) {
-				var buffer = new Buffer(utf8String + '', 'utf8');
-				return buffer.toString('base64');
-			},
-			encodeBuffer: function encodeBuffer(buffer) {
-				if (!(buffer instanceof Buffer)) {
-					if (!(buffer instanceof ArrayBuffer)) {
-						throw new Error(
-							'First argument needs to be a ArrayBuffer.');
-					}
-					buffer = new Buffer(new Uint8Array(buffer));
-				}
-				return buffer.toString('base64');
-			},
-			decode: function decode(base64String, options) {
-				base64String += '';
-
-				if (options == null)
-					options = {};
-
-				if (options.stripLinefeed === false &&
-					/[\n\r]/.test(base64String)) {
-					throw new Error('Invalid character.');
-				}
-
-				var buffer = new Buffer(base64String, 'base64');
-				return buffer.toString('binary');
-			},
-			decodeUtf8: function decodeUtf8(base64String, options) {
-				base64String += '';
-
-				if (options == null)
-					options = {};
-
-				if (options.stripLinefeed === false &&
-					/[\n\r]/.test(base64String)) {
-					throw new Error('Invalid character.');
-				}
-
-				var buffer = new Buffer(base64String, 'base64');
-				return buffer.toString('utf8');
-			},
-			decodeBuffer: function decodeBuffer(base64String, options) {
-				base64String += '';
-
-				if (options == null)
-					options = {};
-
-				if (options.stripLinefeed === false &&
-					/[\n\r]/.test(base64String)) {
-					throw new Error('Invalid character.');
-				}
-
-				var buffer = new Buffer(base64String, 'base64');
-				var array = new Uint8Array(buffer.length);
-				var i = array.length;
-				while (i--)
-					array[i] = buffer[i];
-				return array.buffer;
-			}
-		};
-	}
-
-	// For web browsers.
-
-	var btoa = (function() {
-		if (typeof window === 'object' && typeof window.btoa === 'function') {
-			// For modern web browsers.
-			return window.btoa;
-		} else {
-			// For the other web browsers.
-			var BTOA_TABLE = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-				'abcdefghijklmnopqrstuvwxyz0123456789+/').slice('');
-			return function btoa(binaryString) {
-				var i = 0, l = binaryString.length, length = l - l % 3;
-				var block, result = '';
-				while (i < length) {
-					block = (binaryString.charCodeAt(i++) & 0xFF) << 16 |
-						(binaryString.charCodeAt(i++) & 0xFF) << 8 |
-						(binaryString.charCodeAt(i++) & 0xFF);
-					result += BTOA_TABLE[block >>> 18 & 0x3F];
-					result += BTOA_TABLE[block >>> 12 & 0x3F];
-					result += BTOA_TABLE[block >>> 6 & 0x3F];
-					result += BTOA_TABLE[block & 0x3F];
-				}
-				if (i < l) {
-					block = (binaryString.charCodeAt(i++) & 0xFF) << 16 |
-						(i < l ? binaryString.charCodeAt(i) & 0xFF : 0) << 8;
-					result += BTOA_TABLE[block >>> 18 & 0x3F];
-					result += BTOA_TABLE[block >>> 12 & 0x3F];
-					result += i < l ? BTOA_TABLE[block >>> 6 & 0x3F] : '=';
-					result += '=';
-				}
-				return result;
-			};
-		}
-	}());
-
-	var atob = (function() {
-		if (typeof window === 'object' && typeof window.atob === 'function') {
-			// For modern web browsers.
-			return window.atob;
-		} else {
-			// For the other web browsers.
-			var ATOB_TABLE = {
-				'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
-				'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14,
-				'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21,
-				'W': 22, 'X': 23, 'Y': 24, 'Z': 25, 'a': 26, 'b': 27, 'c': 28,
-				'd': 29, 'e': 30, 'f': 31, 'g': 32, 'h': 33, 'i': 34, 'j': 35,
-				'k': 36, 'l': 37, 'm': 38, 'n': 39, 'o': 40, 'p': 41, 'q': 42,
-				'r': 43, 's': 44, 't': 45, 'u': 46, 'v': 47, 'w': 48, 'x': 49,
-				'y': 50, 'z': 51, '0': 52, '1': 53, '2': 54, '3': 55, '4': 56,
-				'5': 57, '6': 58, '7': 59, '8': 60, '9': 61, '+': 62, '/': 63
-			};
-			return function atob(base64String) {
-				base64String = base64String.replace(/=+$/g, '');
-				if (/[^A-Z0-9\+\/]/i.test(base64String) ||
-					base64String.length % 4 === 1) {
-					throw new Error('Invalid character error.');
-				}
-				var i = 0, l = base64String.length, length = l - l % 4;
-				var block, result = '';
-				while (i < length) {
-					block = ATOB_TABLE[base64String.charAt(i++)] << 18 |
-						ATOB_TABLE[base64String.charAt(i++)] << 12 |
-						ATOB_TABLE[base64String.charAt(i++)] << 6 |
-						ATOB_TABLE[base64String.charAt(i++)];
-					result += String.fromCharCode(
-						block >>> 16 & 0xFF, block >>> 8 & 0xFF, block & 0xFF);
-				}
-				if (i < l) {
-					block = ATOB_TABLE[base64String.charAt(i++)] << 18 |
-						ATOB_TABLE[base64String.charAt(i++)] << 12;
-					result += String.fromCharCode(block >>> 16 & 0xFF);
-					if (i < l) {
-						block |= ATOB_TABLE[base64String.charAt(i)] << 6;
-						result += String.fromCharCode(block >>> 8 & 0xFF);
-					}
-				}
-				return result;
-			};
-		}
-	}());
-
-	var encode = function encode(binaryString) {
-		return btoa(binaryString + '');
-	};
-
-	var encodeUtf8 = function encodeUtf8(utf8String) {
-		var binaryString = unescape(encodeURIComponent(utf8String + ''));
-		return btoa(binaryString);
-	};
-
-	var decode = function decode(base64String, options) {
-		base64String += '';
-
-		if (options == null)
-			options = {};
-
-		if (options.stripLinefeed !== false)
-			base64String = base64String.replace(/[\n\r]/g, '');
-
-		var binaryString = atob(base64String);
-		return binaryString;
-	};
-
-	var decodeUtf8 = function decodeUtf8(base64String, options) {
-		base64String += '';
-
-		if (options == null)
-			options = {};
-
-		if (options.stripLinefeed !== false)
-			base64String = base64String.replace(/[\n\r]/g, '');
-
-		var binaryString = atob(base64String);
-		return decodeURIComponent(escape(binaryString));
-	};
-
-	if (typeof ArrayBuffer !== 'undefined' &&
-		typeof Uint8Array !== 'undefined') {
-		// For modern web browsers.
-		return {
-			encode: encode,
-			encodeUtf8: encodeUtf8,
-			encodeBuffer: function encodeBuffer(buffer) {
-				if (!(buffer instanceof ArrayBuffer)) {
-					throw new Error(
-						'First argument needs to be a ArrayBuffer.');
-				}
-				var array = Array.prototype.slice.call(new Uint8Array(buffer));
-				var binaryString = String.fromCharCode.apply(String, array);
-				return btoa(binaryString);
-			},
-			decode: decode,
-			decodeUtf8: decodeUtf8,
-			decodeBuffer: function decodeBuffer(base64String, options) {
-				base64String += '';
-
-				if (options == null)
-					options = {};
-
-				if (options.stripLinefeed !== false)
-					base64String = base64String.replace(/[\n\r]/g, '');
-
-				var binaryString = atob(base64String);
-				var i, length = binaryString.length;
-				var result = new Uint8Array(length);
-				for (i = 0; i < length; i++)
-					result[i] = binaryString.charCodeAt(i);
-				return result.buffer;
-			}
-		};
-	}
-
-	return {
-		encode: encode,
-		encodeUtf8: encodeUtf8,
-		decode: decode,
-		decodeUtf8: decodeUtf8
-	};
+var $$1 = function (b, a, c) {
+        return b = !0, a = {}, c = { exports: a }, function () {
+            return b && (b = !1, function (d, a) {
+                var b = window.btoa !== void 0 ? window.btoa : $$3().btoa;
+                var c = window.atob !== void 0 ? window.atob : $$3().atob;
+                a.encode = function a(a) {
+                    return b(a + '');
+                }, a.encodeUtf8 = function a(c) {
+                    var a = unescape(encodeURIComponent(c + ''));
+                    return b(a);
+                }, a.decode = function a(a, b) {
+                    a += '', b == null && (b = {}), b.stripLinefeed !== !1 && (a = a.replace(/[\n\r]/g, ''));
+                    var d = c(a);
+                    return d;
+                }, a.decodeUtf8 = function a(a, b) {
+                    a += '', b == null && (b = {}), b.stripLinefeed !== !1 && (a = a.replace(/[\n\r]/g, ''));
+                    var d = c(a);
+                    return decodeURIComponent(escape(d));
+                }, typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && (a.encodeBuffer = function a(a) {
+                    if (!(a instanceof ArrayBuffer))
+                        throw new Error('First argument needs to be a ArrayBuffer.');
+                    var c = Array.prototype.slice.call(new Uint8Array(a));
+                    var d = String.fromCharCode.apply(String, c);
+                    return b(d);
+                }, a.decodeBuffer = function a(b, d) {
+                    b += '', d == null && (d = {}), d.stripLinefeed !== !1 && (b = b.replace(/[\n\r]/g, ''));
+                    var e = c(b);
+                    var a, f = e.length;
+                    var g = new Uint8Array(f);
+                    for (a = 0; a < f; a++)
+                        g[a] = e.charCodeAt(a);
+                    return g.buffer;
+                });
+            }.call(a, c, a)), c.exports;
+        };
+    }();
+var $$2 = function (b, a, c) {
+        return b = !0, a = {}, c = { exports: a }, function () {
+            return b && (b = !1, function (c, b) {
+                var a = require('buffer').Buffer;
+                b.encode = function b(c) {
+                    var b = new a(c + '', 'binary');
+                    return b.toString('base64');
+                }, b.encodeUtf8 = function b(c) {
+                    var b = new a(c + '', 'utf8');
+                    return b.toString('base64');
+                }, b.encodeBuffer = function b(b) {
+                    if (!(b instanceof a)) {
+                        if (!(b instanceof ArrayBuffer))
+                            throw new Error('First argument needs to be a ArrayBuffer.');
+                        b = new a(new Uint8Array(b));
+                    }
+                    return b.toString('base64');
+                }, b.decode = function b(b, c) {
+                    if (b += '', c == null && (c = {}), c.stripLinefeed === !1 && /[\n\r]/.test(b))
+                        throw new Error('Invalid character.');
+                    var d = new a(b, 'base64');
+                    return d.toString('binary');
+                }, b.decodeUtf8 = function b(b, c) {
+                    if (b += '', c == null && (c = {}), c.stripLinefeed === !1 && /[\n\r]/.test(b))
+                        throw new Error('Invalid character error.');
+                    var d = new a(b, 'base64');
+                    return d.toString('utf8');
+                }, b.decodeBuffer = function b(d, e) {
+                    if (d += '', e == null && (e = {}), e.stripLinefeed === !1 && /[\n\r]/.test(d))
+                        throw new Error('Invalid character error.');
+                    var f = new a(d, 'base64');
+                    var b = new Uint8Array(f.length);
+                    var c = b.length;
+                    while (c--)
+                        b[c] = f[c];
+                    return b.buffer;
+                };
+            }.call(a, c, a)), c.exports;
+        };
+    }();
+var $$3 = function (b, a, c) {
+        return b = !0, a = {}, c = { exports: a }, function () {
+            return b && (b = !1, function (d, c) {
+                var a = [
+                        'A',
+                        'B',
+                        'C',
+                        'D',
+                        'E',
+                        'F',
+                        'G',
+                        'H',
+                        'I',
+                        'J',
+                        'K',
+                        'L',
+                        'M',
+                        'N',
+                        'O',
+                        'P',
+                        'Q',
+                        'R',
+                        'S',
+                        'T',
+                        'U',
+                        'V',
+                        'W',
+                        'X',
+                        'Y',
+                        'Z',
+                        'a',
+                        'b',
+                        'c',
+                        'd',
+                        'e',
+                        'f',
+                        'g',
+                        'h',
+                        'i',
+                        'j',
+                        'k',
+                        'l',
+                        'm',
+                        'n',
+                        'o',
+                        'p',
+                        'q',
+                        'r',
+                        's',
+                        't',
+                        'u',
+                        'v',
+                        'w',
+                        'x',
+                        'y',
+                        'z',
+                        '0',
+                        '1',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                        '+',
+                        '/'
+                    ];
+                var b = {
+                        A: 0,
+                        B: 1,
+                        C: 2,
+                        D: 3,
+                        E: 4,
+                        F: 5,
+                        G: 6,
+                        H: 7,
+                        I: 8,
+                        J: 9,
+                        K: 10,
+                        L: 11,
+                        M: 12,
+                        N: 13,
+                        O: 14,
+                        P: 15,
+                        Q: 16,
+                        R: 17,
+                        S: 18,
+                        T: 19,
+                        U: 20,
+                        V: 21,
+                        W: 22,
+                        X: 23,
+                        Y: 24,
+                        Z: 25,
+                        a: 26,
+                        b: 27,
+                        c: 28,
+                        d: 29,
+                        e: 30,
+                        f: 31,
+                        g: 32,
+                        h: 33,
+                        i: 34,
+                        j: 35,
+                        k: 36,
+                        l: 37,
+                        m: 38,
+                        n: 39,
+                        o: 40,
+                        p: 41,
+                        q: 42,
+                        r: 43,
+                        s: 44,
+                        t: 45,
+                        u: 46,
+                        v: 47,
+                        w: 48,
+                        x: 49,
+                        y: 50,
+                        z: 51,
+                        0: 52,
+                        1: 53,
+                        2: 54,
+                        3: 55,
+                        4: 56,
+                        5: 57,
+                        6: 58,
+                        7: 59,
+                        8: 60,
+                        9: 61,
+                        '+': 62,
+                        '/': 63
+                    };
+                c.btoa = function b(e) {
+                    var b = 0, f = e.length, g = f - f % 3;
+                    var d, c = '';
+                    while (b < g)
+                        d = (e.charCodeAt(b++) & 255) << 16 | (e.charCodeAt(b++) & 255) << 8 | e.charCodeAt(b++) & 255, c += a[d >>> 18 & 63], c += a[d >>> 12 & 63], c += a[d >>> 6 & 63], c += a[d & 63];
+                    return b < f && (d = (e.charCodeAt(b++) & 255) << 16 | (b < f ? (e.charCodeAt(b) & 255) << 8 : 0), c += a[d >>> 18 & 63], c += a[d >>> 12 & 63], c += b < f ? a[d >>> 6 & 63] : '=', c += '='), c;
+                }, c.atob = function a(a) {
+                    if (a = a.replace(/=+$/g, ''), /[^A-Z0-9\+\/]/i.test(a) || a.length % 4 === 1)
+                        throw new Error('Invalid character error.');
+                    var c = 0, g = a.length, h = g - g % 4;
+                    var d, e = [], f = 0;
+                    while (c < h)
+                        d = b[a.charAt(c++)] << 18 | b[a.charAt(c++)] << 12 | b[a.charAt(c++)] << 6 | b[a.charAt(c++)], e[f++] = d >>> 16 & 255, e[f++] = d >>> 8 & 255, e[f++] = d & 255;
+                    return c < g && (d = b[a.charAt(c++)] << 18 | b[a.charAt(c++)] << 12, e[f++] = d >>> 16 & 255, c < g && (d |= b[a.charAt(c)] << 6, e[f++] = d >>> 8 & 255)), String.fromCharCode.apply(String, e);
+                };
+            }.call(a, c, a)), c.exports;
+        };
+    }();
+void function (b, a) {
+    typeof module === 'object' ? a(module.exports) : typeof define === 'function' && define.amd ? define(['exports'], a) : a(b.base64codec = {});
+}(this, function (a) {
+    typeof module === 'object' ? (a.encode = $$2().encode, a.encodeUtf8 = $$2().encodeUtf8, a.encodeBuffer = $$2().encodeBuffer, a.decode = $$2().decode, a.decodeUtf8 = $$2().decodeUtf8, a.decodeBuffer = $$2().decodeBuffer) : (a.encode = $$1().encode, a.encodeUtf8 = $$1().encodeUtf8, a.decode = $$1().decode, a.decodeUtf8 = $$1().decodeUtf8, typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && (a.encodeBuffer = $$1().encodeBuffer, a.decodeBuffer = $$1().decodeBuffer));
 });

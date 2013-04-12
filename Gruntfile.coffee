@@ -1,5 +1,25 @@
 module.exports = (grunt) ->
 	grunt.initConfig
+		pkg: grunt.file.readJSON 'package.json'
+
+		make:
+			dist:
+				src: ['src/base64codec.js', 'src/**/*.js']
+				dest: 'base64codec.js'
+				options:
+					banner:
+						'''
+						/*
+						 * <%= pkg.name %> version <%= pkg.version %>
+						 *
+						 * (C) 2012-2013 chick307 <chick307@gmail.com>
+						 *
+						 * Licensed under the MIT License.
+						 * http://opensource.org/licenses/mit-license
+						 */
+
+						'''
+
 		mochaTest:
 			dist: ['test/*.js']
 
@@ -16,6 +36,7 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks 'grunt-mocha-test'
 	grunt.loadNpmTasks 'grunt-mocha'
 	grunt.loadNpmTasks 'grunt-contrib-watch'
+	grunt.loadTasks 'tasks'
 
-	grunt.registerTask 'test', ['mochaTest', 'mocha']
+	grunt.registerTask 'test', ['make', 'mochaTest', 'mocha']
 	grunt.registerTask 'default', ['test']
