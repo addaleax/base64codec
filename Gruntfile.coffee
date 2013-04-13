@@ -21,7 +21,8 @@ module.exports = (grunt) ->
 						'''
 
 		mochaTest:
-			dist: ['test/*.js']
+			dist: ['test/base64codec-test.js']
+			polyfill: ['test/polyfill-test.js']
 
 		mocha:
 			all: ['test/index.html', 'test/issue-3.html']
@@ -32,11 +33,14 @@ module.exports = (grunt) ->
 			all:
 				files: ['base64codec.js', 'test/*.js', 'test/index.html']
 				tasks: ['test']
+			polyfill:
+				files: ['src/polyfill.js', 'test/polyfill-test.js']
+				tasks: ['mochaTest:polyfill']
 
 	grunt.loadNpmTasks 'grunt-mocha-test'
 	grunt.loadNpmTasks 'grunt-mocha'
 	grunt.loadNpmTasks 'grunt-contrib-watch'
 	grunt.loadTasks 'tasks'
 
-	grunt.registerTask 'test', ['make', 'mochaTest', 'mocha']
-	grunt.registerTask 'default', ['test']
+	grunt.registerTask 'test', ['mochaTest', 'mocha']
+	grunt.registerTask 'default', ['make', 'test']
